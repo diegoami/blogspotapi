@@ -1,4 +1,4 @@
-from blogspotapi.blog_client import BlogClient
+from blogspotapi import BlogClient
 import os
 from oauth2client.tools import argparser
 

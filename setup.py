@@ -18,7 +18,7 @@ setup(
     install_requires=['requests'],
     description='Python Blogspot API Wrapper',
     long_description=README,
-    url='https://github.com/diegoami/amaraapi/',
+    url='https://github.com/diegoami/blogspotapi/',
     author='Diego Amicabile',
     author_email='diego.amicabile@gmail.com',
     classifiers=[
