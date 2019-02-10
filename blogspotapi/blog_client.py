@@ -4,6 +4,8 @@ from googleapiclient import sample_tools
 import re
 from bs4 import BeautifulSoup  # Or from BeautifulSoup import BeautifulSoup
 import datetime
+from collections import namedtuple
+import re
 
 from oauth2client.tools import argparser, run_flow
 
@@ -15,6 +17,11 @@ from googleapiclient.http import build_http
 from oauth2client import client
 from oauth2client import file
 from oauth2client import tools
+BlogPost = namedtuple('BlogPost', 'postId url title videoId content labels amara_embed')
+
+
+
+
 
 class BlogClient:
 
@@ -33,13 +40,13 @@ class BlogClient:
 
     def login(self):
         service, flags = sample_tools.init(
-            sys.argv+['--noauth_local_webserver'], 'blogger', 'v3', __doc__, self.client_json_file ,
+            ['--noauth_local_webserver'], 'blogger', 'v3', __doc__, self.client_json_file ,
             scope='https://www.googleapis.com/auth/blogger')
         return service, flags
 
     def replace_object_in_blog_post(self, blogId, postId):
 
-        content, videoId, posts_doc = self.extract_content_and_video(blogId, postId, posts)
+        content, videoId, posts_doc = self.extract_content_and_video(blogId, postId)
         obind1 = content.find('<object')
         obind2 = content.find('object>')
 
@@ -95,7 +102,7 @@ class BlogClient:
         return self.stripHtmlTags(content )
 
 
-    def iterate_blog_posts(self, blogId):
+    def iterate_blog_items(self, blogId):
 
         request = self.posts.list(blogId=blogId)
         while request != None:
@@ -104,3 +111,17 @@ class BlogClient:
                 for post in posts_doc['items']:
                     yield post
             request = self.posts.list_next(request, posts_doc)
+
+    def iterate_blog_posts(self, blogId):
+        for item in self.iterate_blog_items(blogId):
+            content = item['content']
+            m_you_tube = re.search('src=\\\".*?youtube\.com\/embed\/([\w\-]{11})[\"\?]', content)
+            m_amara_embed = re.search('amara-embed', content)
+            video_id = m_you_tube.group(1) if m_you_tube else None
+            yield BlogPost(postId=item['id'],
+                           url=item['url'],
+                           title=item['title'].strip(),
+                           videoId=video_id,
+                           content=self.stripHtmlTags(item['content']),
+                           labels=item.get('labels', None),
+                           amara_embed=1 if m_amara_embed else 0)
