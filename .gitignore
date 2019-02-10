@@ -1,2 +1,6 @@
 .idea/
 **/*.pyc
+build/**
+dist/**
+client_secrets.json
+blogspotapi.egg-info/**
