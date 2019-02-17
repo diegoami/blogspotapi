@@ -6,7 +6,7 @@ import traceback
 
 class BlogRepository:
 
-    def __init__(self, mongo_connection, blogId, amara_headers=None):
+    def __init__(self, mongo_connection, blogId):
         self.mongo_connect = mongo_connection
         self.client = MongoClient(mongo_connection)
         self.musicblogs_database = self.client.musicblogs
@@ -23,10 +23,11 @@ class BlogRepository:
             }
 
         self.postids = set(self.posts_map.keys())
-        if amara_headers:
-            self.amara_headers = amara_headers
-            self.amara_tools = AmaraTools(self.amara_headers)
-            self.subtitles_collection = self.musicblogs_database['subtitles.' + blogId]
+        self.subtitles_collection = self.musicblogs_database['subtitles.' + blogId]
+
+
+  #  def iterate_blog_posts(self, with_sub_titles=False):
+  #      for
 
     def update_blog_post(self, blog_post):
         if not blog_post:
@@ -53,8 +54,9 @@ class BlogRepository:
             self.posts_collection.insert_one(blog_post._asdict())
             print("inserted {} ".format(blog_post.postId))
 
-    def update_sub_titles(self, blog_post, languages):
-#
+    def update_sub_titles(self, blog_post, languages, amara_headers):
+
+        amara_tools = AmaraTools(amara_headers)
         if hasattr(blog_post, "labels"):
             labels = blog_post.labels
             video_url = blog_post.videoId
@@ -62,8 +64,8 @@ class BlogRepository:
             if labels and ('subtitled' in labels or 'SUBTITLED' in labels):
                 print("Trying to get video for {}".format(video_url))
                 try:
-                    amara_id = self.amara_tools.get_video_id(video_url='https://youtu.be/' + video_url)
-                    amara_video = AmaraVideo(self.amara_headers, amara_id)
+                    amara_id = amara_tools.get_video_id(video_url='https://youtu.be/' + video_url)
+                    amara_video = AmaraVideo(amara_headers, amara_id)
                     if amara_video:
                         languages_video = amara_video.get_languages()
                         common_languages = [l for l in languages_video if l in languages]
