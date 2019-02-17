@@ -26,8 +26,10 @@ class BlogRepository:
         self.subtitles_collection = self.musicblogs_database['subtitles.' + blogId]
 
 
-  #  def iterate_blog_posts(self, with_sub_titles=False):
-  #      for
+    def get_subtitles_for(self, video_url):
+        sub_titles_rec = self.subtitles_collection.find_one({"video_url": video_url})
+        if sub_titles_rec:
+            return sub_titles_rec['subtitles']
 
     def update_blog_post(self, blog_post):
         if not blog_post:

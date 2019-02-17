@@ -1,27 +1,10 @@
 
-import sys
 from googleapiclient import sample_tools
-import re
 from bs4 import BeautifulSoup  # Or from BeautifulSoup import BeautifulSoup
 import datetime
 from collections import namedtuple
 import re
-
-from oauth2client.tools import argparser, run_flow
-
-import argparse
-import os
-
-from googleapiclient import discovery
-from googleapiclient.http import build_http
-from oauth2client import client
-from oauth2client import file
-from oauth2client import tools
 BlogPost = namedtuple('BlogPost', 'postId url title videoId content labels amara_embed')
-
-
-
-
 
 class BlogClient:
 
@@ -92,7 +75,7 @@ class BlogClient:
         request = posts.get(blogId=blogId,postId=postId)
         posts_doc = request.execute()
         posts_doc['content'] = posts_doc['content'].replace(old_youtube_ref,new_youtube_ref)
-        request = posts.update(blogId=blogId,postId=postId,body=posts_doc)
+        request = posts.update(blogId=blogId, postId=postId,body=posts_doc)
         request.execute()
 
     def retrieve_lyrics(self, blogId, postId ):
