@@ -3,9 +3,10 @@ from .blog_client import BlogPost
 from amaraapi import AmaraTools, AmaraVideo
 import traceback
 
+
 class BlogRepository:
 
-    def __init__(self, mongo_connection, blogId, amara_headers):
+    def __init__(self, mongo_connection, blogId, amara_headers=None):
         self.mongo_connect = mongo_connection
         self.client = MongoClient(mongo_connection)
         self.musicblogs_database = self.client.musicblogs
@@ -22,9 +23,10 @@ class BlogRepository:
             }
 
         self.postids = set(self.posts_map.keys())
-        self.amara_headers = amara_headers
-        self.amara_tools = AmaraTools(self.amara_headers)
-        self.subtitles_collection = self.musicblogs_database['subtitles.' + blogId]
+        if amara_headers:
+            self.amara_headers = amara_headers
+            self.amara_tools = AmaraTools(self.amara_headers)
+            self.subtitles_collection = self.musicblogs_database['subtitles.' + blogId]
 
     def update_blog_post(self, blog_post):
         if not blog_post:
