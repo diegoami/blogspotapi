@@ -79,7 +79,7 @@ class BlogRepository:
                                 self.subtitles_collection.replace_one(
                                     filter={"video_url": video_url},
                                     replacement={"video_url": video_url, "video_id": amara_id, "lang": sel_language,
-                                                 "subtitles": subtitles},
+                                                 "subtitles": subtitles['subtitles']},
                                     upsert=True
                                 )
 
