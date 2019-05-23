@@ -70,7 +70,7 @@ class BlogRepository:
                     amara_video = AmaraVideo(amara_headers, amara_id)
                     if amara_video:
                         languages_video = amara_video.get_languages()
-                        common_languages = [l for l in languages_video if l in languages]
+                        common_languages = [l['code'] for l in languages_video if l['code'] in languages]
                         if common_languages:
                             sel_language = common_languages[0]
                             subtitles = amara_video.get_subtitles(sel_language)
@@ -91,3 +91,13 @@ class BlogRepository:
         for postid in self.postids:
             self.posts_collection.delete_one({'postId': postid})
             print("post {} deleted".format(postid))
+
+    def save_to_videos(self):
+        videos_collection = self.musicblogs_database['blog_videos.' + str(self.blogId)]
+        for postId, blog_post in self.posts_map.items():
+            videoId = blog_post.videoId
+            videos_collection.replace_one(
+                filter={"blogId": self.blogId, "postId": postId},
+                replacement={"videoId": videoId, "title": blog_post.title, "blogId": self.blogId, "postId": postId},
+                upsert=True
+            )
