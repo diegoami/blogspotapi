@@ -6,6 +6,7 @@ from collections import namedtuple
 import re
 BlogPost = namedtuple('BlogPost', 'postId url title videoId content labels amara_embed')
 
+
 class BlogClient:
 
     def __init__(self, client_json_file):
