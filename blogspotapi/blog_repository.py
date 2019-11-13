@@ -77,26 +77,22 @@ class BlogRepository:
                             if valid_subtitles:
                                 subtitles = valid_subtitles[0]
                                 print("Saving subtitles for {}".format(video_url))
-                                if self.subtitles_collection.count({"video_url": video_url}) > 1:
-                                    self.subtitles_collection.replace_one(
-                                        filter={"video_url": video_url, "version_number": subtitles['version_number']},
-                                        replacement={"video_url": video_url, "video_id": amara_id, "lang":  subtitles['language'],
-                                                     "subtitles": subtitles['subtitles'], "version_number": subtitles['version_number']},
-                                        upsert=True
-                                    )
-                                else:
-                                    self.subtitles_collection.replace_one(
-                                        filter={"video_url": video_url},
-                                        replacement={"video_url": video_url, "video_id": amara_id,
-                                                     "lang": subtitles['language'],
-                                                     "subtitles": subtitles['subtitles'],
-                                                     "version_number": subtitles['version_number']},
-                                        upsert=True
-                                    )
+                                self.subtitles_collection.replace_one(
+                                    filter={"video_url": video_url},
+                                    replacement={"video_url": video_url, "video_id": amara_id,
+                                                 "lang": subtitles['language'],
+                                                 "subtitles": subtitles['subtitles'],
+                                                 "version_number": subtitles['version_number']},
+                                    upsert=True
+                                )
 
                 except:
                     print("Could not process {} from {}".format(video_url, blog_post.url))
                     traceback.print_exc()
+
+        self.subtitles_collection.remove(
+                {"version_number": {"$exists": False}},
+        )
 
     def delete_old_posts(self):
         for postid in self.postids:
