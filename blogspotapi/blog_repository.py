@@ -2,7 +2,7 @@ from pymongo import MongoClient
 from .blog_client import BlogPost
 from amaraapi import AmaraTools, AmaraVideo
 import traceback
-
+import sys
 
 class BlogRepository:
 
@@ -91,7 +91,7 @@ class BlogRepository:
                                 found = True
 
                 except:
-                    traceback.print_stack()
+                    traceback.print_exc(file=sys.stderr)
                     print("Could not process {} from {}".format(video_url, blog_post.url))
                 if not found:
                     print("Could not find subtitles for {}, {}".format(video_url, blog_post.url))
