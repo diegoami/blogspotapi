@@ -82,7 +82,7 @@ class BlogRepository:
                                     replacement={"video_url": video_url, "video_id": amara_id,
                                                  "lang": subtitles['language'],
                                                  "subtitles": subtitles['subtitles'],
-                                                 "version_number": subtitles['version_number']},
+                                                 "version_number": subtitles.get('version_number',1)},
                                     upsert=True
                                 )
 
