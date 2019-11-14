@@ -64,14 +64,17 @@ class BlogRepository:
             video_url = blog_post.videoId
 
             if labels and ('subtitled' in labels or 'SUBTITLED' in labels):
+                found = False
                 print("Trying to get video for {}".format(video_url))
                 try:
                     amara_id = amara_tools.get_video_id(video_url='https://youtu.be/' + video_url)
                     amara_video = AmaraVideo(amara_headers, amara_id)
                     if amara_video:
+                        print("Found video in Amara")
                         languages_video = amara_video.get_languages()
                         common_languages = [l['code'] for l in languages_video if l['code'] in languages]
                         if common_languages:
+                            print("Found languages : {}".format(common_languages))
                             all_subtitles = [amara_video.get_subtitles(sel_language) for sel_language in common_languages]
                             valid_subtitles = [subtitle for subtitle in all_subtitles if subtitle and len(subtitle['subtitles']) > 0 and '-->' in subtitle['subtitles']]
                             if valid_subtitles:
@@ -85,11 +88,13 @@ class BlogRepository:
                                                  "version_number": subtitles.get('version_number',1)},
                                     upsert=True
                                 )
+                                found = True
 
                 except:
+                    traceback.print_stack()
                     print("Could not process {} from {}".format(video_url, blog_post.url))
-                    traceback.print_exc()
-
+                if not found:
+                    print("Could not find subtitles for {}, {}".format(video_url, blog_post.url))
         self.subtitles_collection.remove(
                 {"version_number": {"$exists": False}},
         )
