@@ -4,3 +4,4 @@ build/**
 dist/**
 client_secrets.json
 blogspotapi.egg-info/**
+amara/amara_env.py

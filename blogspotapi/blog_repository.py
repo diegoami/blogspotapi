@@ -79,13 +79,15 @@ class BlogRepository:
                             valid_subtitles = [subtitle for subtitle in all_subtitles if subtitle and len(subtitle['subtitles']) > 0 and '-->' in subtitle['subtitles']]
                             if valid_subtitles:
                                 subtitles = valid_subtitles[0]
-                                print("Saving subtitles for {}".format(video_url))
+                                version_number = subtitles.get('version_number', 1)
+                                lang = subtitles['language']["code"]
+                                print("Saving subtitles for {}, v{}, {}".format(video_url, version_number, lang))
                                 self.subtitles_collection.replace_one(
-                                    filter={"video_url": video_url},
+                                    filter={"video_url": video_url, "version_number": version_number},
                                     replacement={"video_url": video_url, "video_id": amara_id,
                                                  "lang": subtitles['language'],
                                                  "subtitles": subtitles['subtitles'],
-                                                 "version_number": subtitles.get('version_number',1)},
+                                                 "version_number": version_number},
                                     upsert=True
                                 )
                                 found = True
