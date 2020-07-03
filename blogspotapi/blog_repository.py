@@ -3,7 +3,7 @@ from .blog_client import BlogPost
 from amaraapi import AmaraTools, AmaraVideo
 import traceback
 import sys
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 class BlogRepository:
 
@@ -104,10 +104,19 @@ class BlogRepository:
                 {"version_number": {"$exists": False}},
         )
 
-    def delete_old_posts(self):
+    def delete_invalid_posts(self):
         for postid in self.postids:
             self.posts_collection.delete_one({'postId': postid})
             print("post {} deleted".format(postid))
+
+    def delete_old_posts(self):
+
+        older_date = datetime.utcnow() + timedelta(-30)
+        remove_criteria = {"last_updated":{"$lte": older_date}}
+
+        self.posts_collection.remove(remove_criteria)
+        self.subtitles_collection.remove(remove_criteria)
+
 
     def save_to_videos(self):
         videos_collection = self.musicblogs_database['blog_videos.' + str(self.blogId)]

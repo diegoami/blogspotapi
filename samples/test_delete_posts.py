@@ -1,4 +1,5 @@
 from blogspotapi import BlogClient
+import os
 
 import argparse
 import os
@@ -8,7 +9,7 @@ from amara.amara_env import amara_headers
 def update_blog_collection(blog_repository, blog_client, blog_id):
     for blog_post in blog_client.iterate_blog_posts(blog_id):
         blog_repository.update_blog_post(blog_post)
-
+    blog_repository.delete_old_posts()
 
 def update_subtitles_collection(blog_repository, blog_client, blog_id, languages_str, amara_headers):
     languages_list = languages_str.split(',')
@@ -26,7 +27,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     blog_repository = BlogRepository(args.mongo_connection, args.blogId)
-    blog_client = BlogClient(os.path.join(os.path.dirname(__file__), '..', 'client_secrets.json'))
-    update_blog_collection(blog_repository, blog_client, args.blogId)
-    if args.update_subtitles:
-        update_subtitles_collection(blog_repository, blog_client, args.blogId, args.languages, amara_headers)
+    blog_repository.delete_old_posts()
