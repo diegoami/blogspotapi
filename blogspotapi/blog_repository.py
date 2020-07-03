@@ -19,8 +19,7 @@ class BlogRepository:
                 postId=p['postId'], title=p['title'], videoId=p['videoId'], content=p['content'],
                 labels=p.get('labels', 0),
                 url=p.get('url', ''),
-                amara_embed=p.get('amara_embed', ''),
-                last_updated=datetime.strptime(p.get('last_updated', date.today().strftime("%d/%m/%Y")), '%d/%m/%Y')
+                amara_embed=p.get('amara_embed', ''), last_updated=datetime.utcnow()
             ) for p in self.posts_in_blog
             }
 
@@ -90,7 +89,7 @@ class BlogRepository:
                                                  "lang": subtitles['language'],
                                                  "subtitles": subtitles['subtitles'],
                                                  "version_number": version_number,
-                                                 "last_updated": date.today().strftime("%d/%m/%Y")},
+                                                 "last_updated": datetime.utcnow()},
                                     upsert=True,
 
                                 )
@@ -116,7 +115,7 @@ class BlogRepository:
         for postId, blog_post in self.posts_map.items():
             videoId = blog_post.videoId
             replacement = {"videoId": videoId, "title": blog_post.title, "blogId": self.blogId, "postId": postId,
-                           "last_updated": date.today().strftime("%d/%m/%Y")}
+                           "last_updated": datetime.utcnow()}
 
             videos_collection.replace_one(
                 filter={"blogId": self.blogId, "postId": postId},

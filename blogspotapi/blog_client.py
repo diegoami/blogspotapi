@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup  # Or from BeautifulSoup import BeautifulSoup
 import datetime
 from collections import namedtuple
 import re
-from datetime import date
+from datetime import date, datetime
 BlogPost = namedtuple('BlogPost', 'postId url title videoId content labels amara_embed last_updated')
 
 
@@ -40,7 +40,7 @@ class BlogClient:
         if videoId and obind1 >= 0 and obind2 >=0 :
             newcontent = content[0:obind1]+'<iframe src="https://www.youtube.com/embed/'+videoId+'" width="640" height="390" frameborder="0" allowfullscreen></iframe>'+content[obind2+7:len(content)]
             posts_doc['content'] = newcontent
-            request = self.posts.update(blogId=blogId, postId=postId, body=posts_doc, last_updated=date.today().strftime("%d/%m/%Y"))
+            request = self.posts.update(blogId=blogId, postId=postId, body=posts_doc, last_updated=datetime.utcnow())
             print('Replacing object' + postId)
             request.execute()
 
@@ -71,15 +71,15 @@ class BlogClient:
         posts_doc['content'] = newContent
         posts_doc['labels'].append('subtitled')
         posts_doc['updated'] = posts_doc['published'] = str(datetime.datetime.now().isoformat(timespec='microseconds'))
-        request = self.posts.update(blogId=blogId,postId=postId,body=posts_doc, last_updated=date.today().strftime("%d/%m/%Y"))
+        request = self.posts.update(blogId=blogId,postId=postId,body=posts_doc, last_updated=datetime.utcnow())
         request.execute()
 
 
     def update_video_in_blog_post(self, blogId, postId, old_youtube_ref,new_youtube_ref, posts):
-        request = posts.get(blogId=blogId,postId=postId)
+        request = posts.get(blogId=blogId, postId=postId)
         posts_doc = request.execute()
         posts_doc['content'] = posts_doc['content'].replace(old_youtube_ref, new_youtube_ref)
-        request = posts.update(blogId=blogId, postId=postId, body=posts_doc, last_updated=date.today().strftime("%d/%m/%Y"))
+        request = posts.update(blogId=blogId, postId=postId, body=posts_doc, last_updated=datetime.utcnow())
         request.execute()
 
     def retrieve_lyrics(self, blogId, postId ):
@@ -112,4 +112,4 @@ class BlogClient:
                            content=self.stripHtmlTags(item['content']),
                            labels=item.get('labels', None),
                            amara_embed=1 if m_amara_embed else 0,
-                           last_updated=date.today().strftime("%d/%m/%Y"))
+                           last_updated=datetime.utcnow())
