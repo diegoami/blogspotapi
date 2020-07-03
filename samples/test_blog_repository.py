@@ -4,16 +4,20 @@ import argparse
 import os
 from blogspotapi.blog_repository import BlogRepository
 from amara.amara_env import amara_headers
+import time
 
 def update_blog_collection(blog_repository, blog_client, blog_id):
     for blog_post in blog_client.iterate_blog_posts(blog_id):
-        blog_repository.update_blog_post(blog_post)
 
+        blog_repository.update_blog_post(blog_post)
+        time.sleep(0.2)
 
 def update_subtitles_collection(blog_repository, blog_client, blog_id, languages_str, amara_headers):
     languages_list = languages_str.split(',')
     for blog_post in blog_client.iterate_blog_posts(blog_id):
         blog_repository.update_sub_titles(blog_post, languages_list, amara_headers)
+        time.sleep(0.2)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

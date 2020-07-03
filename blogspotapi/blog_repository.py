@@ -45,13 +45,10 @@ class BlogRepository:
 
             update_key, update_value = {'postId': blog_post.postId}, {k: v for k, v in blog_post._asdict().items() if k not in "postId"}
 
-            if blog_post != self.posts_map[blog_post.postId]:
-                print("updating {}".format(update_key ))
 
-                self.posts_collection.update_one(update_key,   { '$set' : update_value } )
-                print("updated {} ".format(update_key))
-            else:
-                print("post {} unchanged".format(blog_post.postId))
+            print("updating {}".format(update_key ))
+            self.posts_collection.update_one(update_key,   { '$set' : update_value } )
+            print("updated {} ".format(update_key))
         else:
             print("inserting {} ".format(blog_post.postId))
             self.posts_collection.insert_one(blog_post._asdict())
@@ -103,6 +100,9 @@ class BlogRepository:
         self.subtitles_collection.remove(
                 {"version_number": {"$exists": False}},
         )
+        self.subtitles_collection.remove(
+            {"last_updated": {"$exists": False}},
+        )
 
     def delete_invalid_posts(self):
         for postid in self.postids:
@@ -112,10 +112,10 @@ class BlogRepository:
     def delete_old_posts(self):
 
         older_date = datetime.utcnow() + timedelta(-30)
-        remove_criteria = {"last_updated":{"$lte": older_date}}
+        updated_month_ago = {"last_updated":{"$lte": older_date}}
 
-        self.posts_collection.remove(remove_criteria)
-        self.subtitles_collection.remove(remove_criteria)
+        self.posts_collection.remove(updated_month_ago )
+        self.subtitles_collection.remove(updated_month_ago )
 
 
     def save_to_videos(self):
