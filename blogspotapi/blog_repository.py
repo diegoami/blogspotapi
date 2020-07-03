@@ -3,6 +3,7 @@ from .blog_client import BlogPost
 from amaraapi import AmaraTools, AmaraVideo
 import traceback
 import sys
+from datetime import date, datetime
 
 class BlogRepository:
 
@@ -18,7 +19,8 @@ class BlogRepository:
                 postId=p['postId'], title=p['title'], videoId=p['videoId'], content=p['content'],
                 labels=p.get('labels', 0),
                 url=p.get('url', ''),
-                amara_embed=p.get('amara_embed', '')
+                amara_embed=p.get('amara_embed', ''),
+                last_updated=datetime.strptime(p.get('last_updated', date.today().strftime("%d/%m/%Y")), '%d/%m/%Y')
             ) for p in self.posts_in_blog
             }
 
@@ -87,8 +89,10 @@ class BlogRepository:
                                     replacement={"video_url": video_url, "video_id": amara_id,
                                                  "lang": subtitles['language'],
                                                  "subtitles": subtitles['subtitles'],
-                                                 "version_number": version_number},
-                                    upsert=True
+                                                 "version_number": version_number,
+                                                 "last_updated": date.today().strftime("%d/%m/%Y")},
+                                    upsert=True,
+
                                 )
                                 found = True
 
@@ -108,10 +112,14 @@ class BlogRepository:
 
     def save_to_videos(self):
         videos_collection = self.musicblogs_database['blog_videos.' + str(self.blogId)]
+
         for postId, blog_post in self.posts_map.items():
             videoId = blog_post.videoId
+            replacement = {"videoId": videoId, "title": blog_post.title, "blogId": self.blogId, "postId": postId,
+                           "last_updated": date.today().strftime("%d/%m/%Y")}
+
             videos_collection.replace_one(
                 filter={"blogId": self.blogId, "postId": postId},
-                replacement={"videoId": videoId, "title": blog_post.title, "blogId": self.blogId, "postId": postId},
+                replacement=replacement,
                 upsert=True
             )
