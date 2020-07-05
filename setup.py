@@ -10,7 +10,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
     name='blogspotapi',
-    version='0.3.4',
+    version='1.0.0',
     packages=['blogspotapi'],
     include_package_data=True,
     keywords='blogspot api wrapper',

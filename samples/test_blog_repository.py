@@ -5,6 +5,9 @@ import os
 from blogspotapi.blog_repository import BlogRepository
 from amara.amara_env import amara_headers
 import time
+import logging
+
+logging.basicConfig(level=logging.DEBUG )
 
 def update_blog_collection(blog_repository, blog_client, blog_id):
     for blog_post in blog_client.iterate_blog_posts(blog_id):

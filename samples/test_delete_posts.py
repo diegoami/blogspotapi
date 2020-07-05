@@ -28,3 +28,5 @@ if __name__ == "__main__":
 
     blog_repository = BlogRepository(args.mongo_connection, args.blogId)
     blog_repository.delete_old_posts()
+    blog_repository.delete_old_subtitles()
+

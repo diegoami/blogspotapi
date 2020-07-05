@@ -3,9 +3,14 @@ from .blog_client import BlogPost
 from amaraapi import AmaraTools, AmaraVideo
 import traceback
 import sys
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
+import logging
 
 class BlogRepository:
+    older_date = datetime.utcnow() + timedelta(-30)
+    updated_month_ago = {"last_updated": {"$lte": older_date}}
+    never_updated = {"last_updated": {"$exists": False}}
+    invalid = {"valid": False}
 
     def __init__(self, mongo_connection, blogId):
         self.mongo_connect = mongo_connection
@@ -13,19 +18,10 @@ class BlogRepository:
         self.musicblogs_database = self.client.musicblogs
         self.blogId = blogId
         self.posts_collection = self.musicblogs_database['posts.' + blogId]
-        self.posts_in_blog = self.posts_collection.find()
-        self.posts_map = \
-            {p['postId']: BlogPost(
-                postId=p['postId'], title=p['title'], videoId=p['videoId'], content=p['content'],
-                labels=p.get('labels', 0),
-                url=p.get('url', ''),
-                amara_embed=p.get('amara_embed', ''), last_updated=datetime.utcnow()
-            ) for p in self.posts_in_blog
-            }
-
-        self.postids = set(self.posts_map.keys())
         self.subtitles_collection = self.musicblogs_database['subtitles.' + blogId]
 
+    def iterate_posts(self):
+        return self.posts_collection.find()
 
     def get_subtitles_for(self, video_url):
         sub_titles_rec = self.subtitles_collection.find_one({"video_url": video_url})
@@ -38,21 +34,15 @@ class BlogRepository:
 
         if not hasattr(blog_post, "postId"):
             return
-        if blog_post.postId in self.postids:
-            self.postids.remove(blog_post.postId)
 
-        if blog_post.postId in self.posts_map:
+        update_key, update_value = {'postId': blog_post.postId}, {k: v for k, v in blog_post._asdict().items()}
+        result = self.posts_collection.replace_one(
+            filter=update_key,
+            replacement=update_value,
+            upsert=True)
 
-            update_key, update_value = {'postId': blog_post.postId}, {k: v for k, v in blog_post._asdict().items() if k not in "postId"}
 
-
-            print("updating {}".format(update_key ))
-            self.posts_collection.update_one(update_key,   { '$set' : update_value } )
-            print("updated {} ".format(update_key))
-        else:
-            print("inserting {} ".format(blog_post.postId))
-            self.posts_collection.insert_one(blog_post._asdict())
-            print("inserted {} ".format(blog_post.postId))
+        logging.debug(f'Updated {blog_post.postId} : {result.matched_count}, {result.modified_count}, {result.upserted_id}')
 
     def update_sub_titles(self, blog_post, languages, amara_headers):
 
@@ -63,23 +53,23 @@ class BlogRepository:
 
             if labels and ('subtitled' in labels or 'SUBTITLED' in labels):
                 found = False
-                print("Trying to get video for {}".format(video_url))
+                logging.debug("Trying to get video for {}".format(video_url))
                 try:
                     amara_id = amara_tools.get_video_id(video_url='https://youtu.be/' + video_url)
                     amara_video = AmaraVideo(amara_headers, amara_id)
                     if amara_video:
-                        print("Found video in Amara")
+                        logging.debug(f'Found video in Amara: {amara_id}')
                         languages_video = amara_video.get_languages()
                         common_languages = [l['code'] for l in languages_video if l['code'] in languages]
                         if common_languages:
-                            print("Found languages : {}".format(common_languages))
+                            logging.debug("Found languages : {}".format(common_languages))
                             all_subtitles = [amara_video.get_subtitles(sel_language) for sel_language in common_languages]
                             valid_subtitles = [subtitle for subtitle in all_subtitles if subtitle and len(subtitle['subtitles']) > 0 and '-->' in subtitle['subtitles']]
                             if valid_subtitles:
                                 subtitles = valid_subtitles[0]
                                 version_number = subtitles.get('version_number', 1)
                                 lang = subtitles['language']["code"]
-                                print("Saving subtitles for {}, v{}, {}".format(video_url, version_number, lang))
+                                logging.debug("Saving subtitles for {}, v{}, {}".format(video_url, version_number, lang))
                                 self.subtitles_collection.replace_one(
                                     filter={"video_url": video_url, "version_number": version_number},
                                     replacement={"video_url": video_url, "video_id": amara_id,
@@ -91,43 +81,23 @@ class BlogRepository:
 
                                 )
                                 found = True
-
                 except:
                     traceback.print_exc(file=sys.stderr)
                     print("Could not process {} from {}".format(video_url, blog_post.url))
                 if not found:
                     print("Could not find subtitles for {}, {}".format(video_url, blog_post.url))
-        self.subtitles_collection.remove(
-                {"version_number": {"$exists": False}},
-        )
-        self.subtitles_collection.remove(
-            {"last_updated": {"$exists": False}},
-        )
-
-    def delete_invalid_posts(self):
-        for postid in self.postids:
-            self.posts_collection.delete_one({'postId': postid})
-            print("post {} deleted".format(postid))
 
     def delete_old_posts(self):
+        self.posts_collection.remove(self.updated_month_ago)
+        self.posts_collection.remove(self.never_updated)
+        self.posts_collection.remove(self.invalid)
 
-        older_date = datetime.utcnow() + timedelta(-30)
-        updated_month_ago = {"last_updated":{"$lte": older_date}}
+    def delete_old_subtitles(self):
+        self.subtitles_collection.remove(self.updated_month_ago)
+        self.subtitles_collection.remove(self.never_updated)
+        self.subtitles_collection.remove(self.invalid)
 
-        self.posts_collection.remove(updated_month_ago )
-        self.subtitles_collection.remove(updated_month_ago )
-
-
-    def save_to_videos(self):
-        videos_collection = self.musicblogs_database['blog_videos.' + str(self.blogId)]
-
-        for postId, blog_post in self.posts_map.items():
-            videoId = blog_post.videoId
-            replacement = {"videoId": videoId, "title": blog_post.title, "blogId": self.blogId, "postId": postId,
-                           "last_updated": datetime.utcnow()}
-
-            videos_collection.replace_one(
-                filter={"blogId": self.blogId, "postId": postId},
-                replacement=replacement,
-                upsert=True
-            )
+    def invalidate_link(self, post_id, video_url):
+        logging.info("Invalidating POST {post_id} containing video {video_url}")
+        self.posts_collection.update({'postId': post_id}, {'$set': self.invalid})
+        self.subtitles_collection.update({'video_url': video_url}, {'$set': self.invalid})
