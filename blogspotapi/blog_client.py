@@ -78,7 +78,7 @@ class BlogClient:
         newContent = content[0:pos_iframe]+snippet_amara +content[pos_iframe:len(content)]
         posts_doc['content'] = newContent
         posts_doc['labels'].append('subtitled')
-        posts_doc['updated'] = posts_doc['published'] = str(datetime.datetime.now().isoformat(timespec='microseconds'))
+        posts_doc['updated'] = posts_doc['published'] = str(datetime.now().isoformat(timespec='microseconds'))
         request = self.posts.update(blogId=blogId,postId=postId,body=posts_doc)
         request.execute()
 
